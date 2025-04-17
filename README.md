@@ -6,3 +6,8 @@ To reproduce the convergence plot
 python original/paper_demo_mixture.py 5 10 &> mixture_5_10.txt
 python original/paper_demo_mixture.py 20 10 &> mixture_20_10.txt
 ```
+res/mixture_5d.png
+![](res/mixture_5d.png)
+
+res/mixture_20d.png
+![](res/mixture_20d.png)
