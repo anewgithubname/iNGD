@@ -13,9 +13,7 @@ from cometitors import run_rkl_wgf, run_mmdgf
 
 # read commandline first argument for dimension
 import sys
-d = 30
-# d = int(sys.argv[1]) if len(sys.argv) > 1 else 5
-# d = 5
+d = int(sys.argv[1]) if len(sys.argv) > 1 else 5
 print(f"Data {d} dimension")
 
 # x1 = torch.randn(50, d, device=device) * .5 - 2
@@ -69,7 +67,6 @@ from util import KLIEP
 import numpy as np
 from matplotlib import pyplot as plt
 
-d = 30
 trial = 10
 
 res_NGD = np.zeros((trial, 101))
