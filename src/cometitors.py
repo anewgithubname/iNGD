@@ -1,5 +1,6 @@
 # %%
 import torch
+from tqdm import tqdm
 from util import dist2, kernel, median_distance, MMD
 
 from util import kernel as rbf_kernel
@@ -64,12 +65,12 @@ def rkl_wgf(x, y, xt, sigma):
 def run_rkl_wgf(x1, xt, eta = 0.1, niter = 1000):
     traj = [xt.detach().cpu().numpy()]
     try:
-        for i in range(niter):
+        for i in tqdm(range(niter)):
             med = median_distance(xt)
             grad = rkl_wgf(x1, xt, xt, med)
             xt = xt + eta * grad
             traj.append(xt.detach().cpu().numpy())
-            print("mmd: ", MMD(xt, x1, med).item())
+            # print("mmd: ", MMD(xt, x1, med).item())
     except KeyboardInterrupt:
         print("Interrupted, will output the current xt")
         pass
@@ -159,7 +160,7 @@ def compute_mmd_energy(xt, x1):
 def run_mmdgf(x1, xt, eta = 0.1, niter = 1000):
     traj = [xt.detach().cpu().numpy()]
     try:
-        for i in range(niter):
+        for i in tqdm(range(niter)):
             med = median_distance(xt)
             # grad = mmd_gradient_flow_update(x1, xt, med)
             # grad = compute_gradient(xt, x1)
@@ -170,7 +171,7 @@ def run_mmdgf(x1, xt, eta = 0.1, niter = 1000):
             xt = (xt + eta * grad).detach()
             
             traj.append(xt.detach().cpu().numpy())
-            print("mmd: ", MMD(xt, x1, med).item())
+            # print("mmd: ", MMD(xt, x1, med).item())
     except KeyboardInterrupt:
         print("Interrupted, will output the current xt")
         pass

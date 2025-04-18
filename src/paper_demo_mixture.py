@@ -13,20 +13,11 @@ from cometitors import run_rkl_wgf, run_mmdgf
 
 # read commandline first argument for dimension
 import sys
-d = int(sys.argv[1]) if len(sys.argv) > 1 else 5
+d = 5
+# d = int(sys.argv[1]) if len(sys.argv) > 1 else 5
 print(f"Data {d} dimension")
 
-# x1 = torch.randn(50, d, device=device) * .5 - 2
-# x1 = torch.vstack([x1, torch.randn(50, d, device=device) * .5 + 2])
-
-def gendata(n = 100):
-    # # generate truncated Gaussian that is positive 
-    # x = torch.randn(1000, d, device=device)
-    # x = x[x[:, 0] > 0]
-    # x = x[x[:, 1] > 0]
-    # # x = x[x[:, 0] < 2.0]
-    # # x = x[x[:, 1] < 2.0]
-    
+def gendata(n = 100):    
     x1 = torch.randn(100000, d, device=device) * .5 - 2
     x2 = torch.randn(100000, d, device=device) * .5 + 2
     x = torch.vstack([x1, x2])
@@ -42,16 +33,18 @@ print(f"Running {trial} trials")
 if runexp:
     print("Running experiments")
     for seed in range(trial):
+        print(f"Running trial {seed}")
         torch.manual_seed(seed)
         x1 = gendata() 
-        print(x1.shape)
-
         x0 = torch.randn_like(x1)
         
+        print("ntKiNG")
         xt_NGD, traj_NGD = run_ntkNGD(x1.clone(), x0.clone(), eta = 1, maxiter = 100, method='ntkNGD')
+        print("KiNG")
         xt_kNGD, traj_kNGD = run_ntkNGD(x1.clone(), x0.clone(), eta = 1, maxiter = 100, method='kNGD')
-        print(xt_kNGD.shape, len(traj_kNGD))
+        print("WGF")
         xt_KDE, traj_KDE = run_rkl_wgf(x1.clone(), x0.clone(), 1, 100)
+        print("MMD")
         xt_MMD, traj_MMD = run_mmdgf(x1.clone(), x0.clone(), 100, 100) # we forget to divde the MMD gradient by sample size!
         
         np.save(f'res/Target_{seed}_{x1.shape[1]}.npy', x1.cpu().numpy())
@@ -59,6 +52,7 @@ if runexp:
         np.save(f'res/kNGD_{seed}_{x1.shape[1]}.npy', traj_kNGD)
         np.save(f'res/KDE_{seed}_{x1.shape[1]}.npy', traj_KDE)
         np.save(f'res/MMD_{seed}_{x1.shape[1]}.npy', traj_MMD)
+        print()
 else: 
     print("Loading experimental results from files")
 # %%

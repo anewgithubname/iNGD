@@ -1,4 +1,6 @@
 # %%
+# progress bar
+from tqdm import tqdm
 from sklearn.datasets import make_moons, make_s_curve
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -27,7 +29,7 @@ def run_ntkNGD(gendata, x0, xeval=None, eta = 0.1, updatedim = None, maxiter=30,
 
     # catch keyboard interrupt
     try:
-        for iter in range(maxiter):
+        for iter in tqdm(range(maxiter)):
             
             if not callable(gendata):
                 x1 = gendata
@@ -76,9 +78,8 @@ def run_ntkNGD(gendata, x0, xeval=None, eta = 0.1, updatedim = None, maxiter=30,
 
             traj.append(xt.detach().cpu().numpy())
             
-            if callback is None:
-                print("mmd: ", MMD(xt[:, updatedim], x1[:, updatedim], med).item())
-                # print("KLIEP: ", KLIEP(x1, xt).item())
+            # if callback is None:
+                # print("mmd: ", MMD(xt[:, updatedim], x1[:, updatedim], med).item(), end="\r")
     
     except KeyboardInterrupt:
         print("Interrupted, will output the current xt")
