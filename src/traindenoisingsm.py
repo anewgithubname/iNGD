@@ -1,7 +1,8 @@
 # %% 
 from sklearn.datasets import make_s_curve
 import torch
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'xpu'
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
@@ -9,6 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import random
 from scipy.ndimage import rotate
+import torch.nn.functional as F
 
 # Define the MLP-based energy-based model
 class EnergyBasedModel(nn.Module):
@@ -16,11 +18,11 @@ class EnergyBasedModel(nn.Module):
         super(EnergyBasedModel, self).__init__()
         self.network = nn.Sequential(
             nn.Linear(input_dim, 1024),
-            nn.Tanh(),
+            nn.SiLU(),
             nn.Linear(1024, 1024),
-            nn.Tanh(),
+            nn.SiLU(),
             nn.Linear(1024, 211),
-            nn.Tanh(),
+            nn.SiLU(),
             nn.Linear(211, 1)
         )
 
@@ -34,6 +36,46 @@ class EnergyBasedModel(nn.Module):
                 if i == len(self.network) - 2:
                     break
             return x
+
+import torch.nn as nn
+
+# Define the CNN + MLP-based energy-based model
+class FlattenedCNN(nn.Module):
+    def __init__(self):
+        super(FlattenedCNN, self).__init__()
+
+        self.conv_stack = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1),  # 11x11 → 11x11
+            nn.SiLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),  # 11x11 → 6x6
+            nn.SiLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),  # 6x6 → 3x3
+            nn.SiLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),  # 3x3 → 3x3
+            nn.SiLU(),
+            nn.AdaptiveAvgPool2d((2, 2)),  # 3x3 → 2x2
+            nn.Flatten()  # 256 * 2 * 2 = 1024
+        )
+
+        self.fc1 = nn.Linear(1024, 211)
+        self.activation = nn.SiLU()
+        self.fc2 = nn.Linear(211, 1)
+
+    def forward(self, x, penultimate=False, flattened=True):
+        x = x.view(x.size(0), 1, 11, 11)  # from (B, 121)
+        x = self.conv_stack(x)
+        x = self.fc1(x)
+        x = self.activation(x)
+
+        if penultimate:
+            return x
+        else:
+            return self.fc2(x)
+
+    def forward2(self, x, penultimate=False, flattened=True):
+        x = x.view(x.size(0), 1, 7, 7)  # from (B, 49)
+        x = F.interpolate(x, size=(11, 11), mode='bilinear', align_corners=False)
+        return self.forward(x, penultimate=penultimate, flattened=False)
 
 # Training function
 def train_energy_based_model(model, dataloader, optimizer, sigma, epochs=10):
